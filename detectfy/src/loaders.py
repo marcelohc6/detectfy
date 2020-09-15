@@ -3,10 +3,9 @@ import os
 import numpy as np
 import torch
 from PIL import Image
-import cv2
+# import cv2
 
-from config import IMG_ENGINE
-
+import config
 
 def _pil_load_image_mask(img_path, mask_path):
     img = Image.open(img_path).convert("RGB")
@@ -28,7 +27,7 @@ ultils_funcs = {'load_img_mask':
 
 
 class BaseDataset(torch.utils.data.Dataset):
-    def __init__(self, img_root, img_folder, mask_folder, transforms):
+    def __init__(self, img_root, img_folder, mask_folder, transforms=None):
         self.img_root = img_root
         self.img_folder = img_folder
         self.mask_folder = mask_folder
@@ -39,12 +38,12 @@ class BaseDataset(torch.utils.data.Dataset):
         self.masks = list(sorted(os.listdir(os.path.join(img_root, mask_folder))))
 
     def _get_img_mask(self, img_path, mask_path):
-        return ultils_funcs['load_img_mask']['engine'][IMG_ENGINE](img_path, mask_path)
+        return ultils_funcs['load_img_mask']['engine'][config.IMG_ENGINE](img_path, mask_path)
 
     def __getitem__(self, idx):
         # load images ad masks
         img_path = os.path.join(self.img_root, self.img_folder, self.imgs[idx])
-        mask_path = os.path.join(self.mask_root, self.mask_folder, self.masks[idx])
+        mask_path = os.path.join(self.img_root, self.mask_folder, self.masks[idx])
 
         # Load images and masks
         img, mask = self._get_img_mask(img_path, mask_path)

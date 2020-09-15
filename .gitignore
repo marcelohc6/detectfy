@@ -1,3 +1,4 @@
 .DS_Store
 /detectfy/input/PennFudanPed
 /detectfy/input/*.zip
+__pycache__
