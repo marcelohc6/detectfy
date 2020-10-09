@@ -3,7 +3,8 @@ import os
 import numpy as np
 import torch
 from PIL import Image
-# import cv2
+import cv2
+from torch_tranforms import base_transform
 
 import config
 
@@ -17,21 +18,27 @@ def _pil_load_image_mask(img_path, mask_path):
     return img, np.array(mask)
 
 
+def _cv2_load_image_mask(img_path, mask_path):
+    img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)
+    return img
+
+
 ultils_funcs = {'load_img_mask':
                     {'engine': 
                         {'pil': _pil_load_image_mask,
-                         'cv2': None,
+                         'cv2': _cv2_load_image_mask,
                         }
                     }
                 }
 
 
 class BaseDataset(torch.utils.data.Dataset):
-    def __init__(self, img_root, img_folder, mask_folder, transforms=None):
+    def __init__(self, img_root, img_folder, mask_folder, transform=None, aumentation=False):
         self.img_root = img_root
         self.img_folder = img_folder
         self.mask_folder = mask_folder
-        self.transforms = transforms
+        self.transform = transform if transform is not None else base_transform
         # load all image files, sorting them to
         # ensure that they are aligned
         self.imgs = list(sorted(os.listdir(os.path.join(img_root, img_folder))))
@@ -47,6 +54,9 @@ class BaseDataset(torch.utils.data.Dataset):
 
         # Load images and masks
         img, mask = self._get_img_mask(img_path, mask_path)
+
+        # Image to np.array
+        #img = np.array(img)
 
         # instances are encoded as different colors
         obj_ids = np.unique(mask)
@@ -87,10 +97,22 @@ class BaseDataset(torch.utils.data.Dataset):
         target["area"] = area
         target["iscrowd"] = iscrowd
 
-        if self.transforms is not None:
-            img, target = self.transforms(img, target)
+        if self.transform is not None:
+            img = self.transform(img)
 
         return img, target
 
     def __len__(self):
         return len(self.imgs)
+
+
+
+def custom_collate_data(batch):
+    img, target = zip(*batch)
+    return img, target
+
+
+class BaseDataLoader(torch.utils.data.DataLoader):
+    def __init__(self, dataset, **kwargs):
+        super().__init__(dataset, collate_fn=custom_collate_data, **kwargs)
+    

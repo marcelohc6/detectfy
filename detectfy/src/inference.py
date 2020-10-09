@@ -1,19 +1,23 @@
-from loaders import BaseDataset
+from loaders import BaseDataset, BaseDataLoader
+from models import get_model_config
 import os
 
 
-INPUT_PATH = os.path.join(os.path.abspath('').split('src')[0], 'input')
 
-img_mask_folder = 'PennFudanPed'
-img_mask_path = os.path.join(INPUT_PATH, img_mask_folder)
-
-dataset = BaseDataset(img_mask_path, 'PNGImages', 'PedMasks')
-
-test = dataset[0]
+class Model():
 
 
-print(test[0])
-print(test[1])
+
+
+
+
+if __name__ == '__main__':
+    arch = 'faster_rcnn'
+    model_cfg = get_model_config(arch)
+    model = model_cfg['model']
+    dataset = BaseDataset(img_mask_path, 'PNGImages', 'PedMasks', transform=model_cfg['transforms'])
+    baseloader = BaseDataLoader(dataset, batch_size=BATCH_SIZE)
+
 
 
 
